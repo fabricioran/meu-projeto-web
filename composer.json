@@ -1,0 +1,13 @@
+{
+    "name": "usuario/meu-projeto-web",
+    "description": "Projeto MedConnect",
+    "type": "project",
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Core\\": "core/",
+            "Config\\": "config/"
+        }
+    },
+    "require": {}
+}
