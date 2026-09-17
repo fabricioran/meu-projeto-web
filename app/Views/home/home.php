@@ -1,35 +1,33 @@
-<?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-?>
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MedConnect - Cuidado médico de excelência para você</title>
     
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/meu-projeto-web/public/css/home.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars($basePath ?? '', ENT_QUOTES, 'UTF-8'); ?>/public/css/home.css">
 </head>
 <body>
 
     <header>
         <div class="logo">
-            <div class="logo-icon">M</div>
+            <div class="logo-icon logo-icon-accent">M</div>
             <span>MedConnect</span>
         </div>
         <nav>
-            <a href="/meu-projeto-web/public/home">Início</a>
+            <a href="<?= htmlspecialchars($basePath ?? '', ENT_QUOTES, 'UTF-8'); ?>/home">Início</a>
             <a href="#especialidades">Especialidades</a>
             <a href="#exames">Exames</a>
             <a href="#contato">Contato</a>
         </nav>
-        <?php if (isset($_SESSION['usuario'])): ?>
-            <a href="/meu-projeto-web/public/logout" class="btn btn-dark">Sair</a>
+        
+        <?php if (!empty($_SESSION['usuario'])): ?>
+            <a href="<?= htmlspecialchars($basePath ?? '', ENT_QUOTES, 'UTF-8'); ?>/logout" class="btn btn-dark">Sair</a>
         <?php else: ?>
-            <a href="/meu-projeto-web/public/login" class="btn btn-dark">Entrar</a>
+            <a href="<?= htmlspecialchars($basePath ?? '', ENT_QUOTES, 'UTF-8'); ?>/login" class="btn btn-dark">Entrar ➔</a>
         <?php endif; ?>
     </header>
 
@@ -38,9 +36,9 @@ if (session_status() === PHP_SESSION_NONE) {
             <div class="hero-content">
                 <div class="badge-excelencia">🛡️ Excelência em saúde desde 2008</div>
                 <h1>Cuidado médico <br><span>de excelência</span> <br>para você.</h1>
-                <p>Especialistas de alto nível, tecnologia de ponta e atendimento humanizado em um único lugar.</p>
+                <p>Especialistas de alto nível, tecnologia de ponta <br>e atendimento humanizado em um único lugar.</p>
                 
-                <a href="/meu-projeto-web/public/login" class="btn btn-primary">
+                <a href="<?= htmlspecialchars($basePath ?? '', ENT_QUOTES, 'UTF-8'); ?>/agendamentos" class="btn btn-primary">
                     Agendar com atendente ➔
                 </a>
 
@@ -61,7 +59,10 @@ if (session_status() === PHP_SESSION_NONE) {
             </div>
 
             <div class="hero-image-container">
-                <img class="hero-img" src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=600" alt="Médico utilizando smartphone">
+                <img class="hero-img" 
+                     src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=600" 
+                     alt="Médico utilizando smartphone para consultar prontuário digital"
+                     loading="eager">
                 <div class="floating-badge">
                     <div class="badge-icon">⚡</div>
                     <div>
@@ -129,7 +130,8 @@ if (session_status() === PHP_SESSION_NONE) {
         <section id="contato" class="section-container">
             <h2>Pronto para agendar sua consulta?</h2>
             <p class="text-muted text-margin">Entre em contato agora e cuide da sua saúde com os melhores especialistas.</p>
-            <a href="/meu-projeto-web/public/login" class="btn btn-primary">Agendar Agora ➔</a>
+            
+            <a href="<?= htmlspecialchars($basePath ?? '', ENT_QUOTES, 'UTF-8'); ?>/agendamentos" class="btn btn-primary">Agendar Agora ➔</a>
         </section>
     </main>
 
@@ -145,7 +147,7 @@ if (session_status() === PHP_SESSION_NONE) {
         </div>
 
         <div class="copyright">
-            © 2026 MedConnect. Todos os direitos reservados.
+            © <?= date('Y'); ?> MedConnect. Todos os direitos reservados.
         </div>
     </footer>
 

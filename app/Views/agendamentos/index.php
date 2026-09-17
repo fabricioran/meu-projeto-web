@@ -3,20 +3,18 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-if (!isset($_SESSION['usuario_id'])) {
-    $_SESSION['erro_login'] = 'Efetue o login para acessar a página.';
-    header('Location: /meu-projeto-web/public/login');
-    exit;
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
+$csrfToken = $_SESSION['csrf_token'];
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MedConnect - Agendamentos e Pacientes</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/meu-projeto-web/public/css/agendamentos.css">
+    <title>MedConnect - Agendamentos e Pacientes</title>    
+    <link rel="stylesheet" href="/public/css/agendamentos.css?v=<?= time(); ?>">
 </head>
 <body>
 
@@ -28,14 +26,14 @@ if (!isset($_SESSION['usuario_id'])) {
             </div>
             <nav class="sidebar-nav">
                 <ul class="sidebar-menu">
-                    <li><a href="#">📊 Dashboard</a></li>
-                    <li><a href="#">📋 Prontuários</a></li>
-                    <li><a href="/meu-projeto-web/public/agendamentos" class="active">📅 Agendamentos</a></li>
+                    <li><a href="<?= htmlspecialchars($basePath ?? '', ENT_QUOTES, 'UTF-8') ?>/dashboard">📊 Dashboard</a></li>
+                    <li><a href="<?= htmlspecialchars($basePath ?? '', ENT_QUOTES, 'UTF-8') ?>/prontuarios">📋 Prontuários</a></li>
+                    <li><a href="<?= htmlspecialchars($basePath ?? '', ENT_QUOTES, 'UTF-8') ?>/agendamentos" class="active">📅 Agendamentos</a></li>
                 </ul>
             </nav>
         </div>
         <div class="sidebar-footer">            
-            <a href="/meu-projeto-web/public/logout" class="btn-logout">↳ Sair</a>
+            <a href="<?= htmlspecialchars($basePath ?? '', ENT_QUOTES, 'UTF-8') ?>/logout" class="btn-logout">↳ Sair</a>
         </div>
     </aside>
 
@@ -49,32 +47,44 @@ if (!isset($_SESSION['usuario_id'])) {
                 <div class="search-box">
                     <input type="text" placeholder="Buscar...">
                 </div>
-                <div class="user-avatar" title="<?= htmlspecialchars($_SESSION['usuario_nome'] ?? 'Usuário'); ?>">
-                    <?= strtoupper(substr($_SESSION['usuario_nome'] ?? 'U', 0, 2)); ?>
+                
+                <button class="notification-btn" type="button" aria-label="Notificações">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    <span class="notification-badge"></span>
+                </button>
+                
+                <div class="user-avatar" title="<?= htmlspecialchars($_SESSION['usuario_nome'] ?? 'Usuário', ENT_QUOTES, 'UTF-8'); ?>">
+                    <?= htmlspecialchars(strtoupper(substr($_SESSION['usuario_nome'] ?? 'U', 0, 2)), ENT_QUOTES, 'UTF-8'); ?>
                 </div>
             </div>
         </header>
 
         <?php if (!empty($_SESSION['mensagem_sucesso'])): ?>
             <div class="alert alert-success">
-                <?php echo $_SESSION['mensagem_sucesso']; unset($_SESSION['mensagem_sucesso']); ?>
+                <?= htmlspecialchars($_SESSION['mensagem_sucesso'], ENT_QUOTES, 'UTF-8'); ?>
+                <?php unset($_SESSION['mensagem_sucesso']); ?>
             </div>
         <?php endif; ?>
 
         <?php if (!empty($_SESSION['mensagem_erro'])): ?>
             <div class="alert alert-error">
-                <?php echo $_SESSION['mensagem_erro']; unset($_SESSION['mensagem_erro']); ?>
+                <?= htmlspecialchars($_SESSION['mensagem_erro'], ENT_QUOTES, 'UTF-8'); ?>
+                <?php unset($_SESSION['mensagem_erro']); ?>
             </div>
         <?php endif; ?>
 
         <section class="calendar-card">
             <div class="calendar-header">
-                <span>Agosto de 2026</span>
+                <span><?= htmlspecialchars(ucfirst($nomeMes ?? '') . ' de ' . ($anoCalendario ?? ''), ENT_QUOTES, 'UTF-8'); ?></span>
                 <div class="calendar-nav">
-                    <button type="button" class="btn-nav-cal">‹</button>
-                    <button type="button" class="btn-nav-cal">›</button>
+                    <a href="<?= htmlspecialchars($basePath ?? '', ENT_QUOTES, 'UTF-8') ?>/agendamentos?mes=<?= urlencode($mesAnterior ?? ''); ?>&ano=<?= urlencode($anoAnterior ?? ''); ?>" class="btn-nav-cal">‹</a>
+                    <a href="<?= htmlspecialchars($basePath ?? '', ENT_QUOTES, 'UTF-8') ?>/agendamentos?mes=<?= urlencode($mesSeguinte ?? ''); ?>&ano=<?= urlencode($anoSeguinte ?? ''); ?>" class="btn-nav-cal">›</a>
                 </div>
             </div>
+
             <div class="calendar-grid">
                 <div class="day-name">Dom</div>
                 <div class="day-name">Seg</div>
@@ -82,28 +92,42 @@ if (!isset($_SESSION['usuario_id'])) {
                 <div class="day-name">Qua</div>
                 <div class="day-name">Qui</div>
                 <div class="day-name">Sex</div>
-                <div class="day-name">Sab</div>
+                <div class="day-name">Sáb</div>
 
-                <div class="day-cell">1</div>
-                <div class="day-cell">2</div>
-                <div class="day-cell">3</div>
-                <div class="day-cell selected">4</div>
-                <div class="day-cell has-appointment">5</div>
-                <div class="day-cell">6</div>
-                <div class="day-cell">7</div>
+                <?php for ($i = 0; $i < ($primeiroDiaSemana ?? 0); $i++): ?>
+                    <div class="day-cell empty"></div>
+                <?php endfor; ?>
+
+                <?php for ($dia = 1; $dia <= ($totalDiasMes ?? 0); $dia++): ?>
+                    <?php 
+                        $classes = ['day-cell'];
+                        
+                        if (($hojeDia ?? null) !== null && $dia === $hojeDia) {
+                            $classes[] = 'today-highlight';
+                        }
+                        
+                        if (in_array($dia, $diasComConsulta ?? [], true)) {
+                            $classes[] = 'has-appointment';
+                        }
+                    ?>
+                    <div class="<?= implode(' ', $classes); ?>">
+                        <span class="day-number"><?= $dia; ?></span>
+                    </div>
+                <?php endfor; ?>
             </div>
 
             <div class="legend">
-                <div class="legend-item"><span class="dot dot-selected"></span> Selecionado</div>
                 <div class="legend-item"><span class="dot dot-today"></span> Hoje</div>
                 <div class="legend-item"><span class="dot dot-appointment"></span> Com consultas</div>
             </div>
         </section>
 
         <section class="card">
-            <h2 class="card-title">Adicionar Pacientes</h2>
+            <h2 class="card-title">Adicionar Pacientes e Agendamento</h2>
             
-            <form action="/meu-projeto-web/public/pacientes/salvar" method="POST" id="formPaciente">
+            <form action="<?= htmlspecialchars($basePath ?? '', ENT_QUOTES, 'UTF-8') ?>/agendamentos/salvar" method="POST" id="formPaciente">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>">
+
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="nome">Nome:</label>
@@ -130,6 +154,29 @@ if (!isset($_SESSION['usuario_id'])) {
                     </div>
 
                     <div class="form-group">
+                        <label for="especialidade">Especialidade:</label>
+                        <select id="especialidade" name="especialidade" required>
+                            <option value="">Selecione...</option>
+                            <?php foreach (($especialidadesDisponiveis ?? []) as $esp): ?>
+                                <option value="<?= htmlspecialchars($esp, ENT_QUOTES, 'UTF-8'); ?>"><?= htmlspecialchars($esp, ENT_QUOTES, 'UTF-8'); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <span class="error-msg" id="err-especialidade"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="data_agendamento">Data:</label>
+                        <input type="date" id="data_agendamento" name="data_agendamento" required>
+                        <span class="error-msg" id="err-data"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="hora_agendamento">Hora:</label>
+                        <input type="time" id="hora_agendamento" name="hora_agendamento" required>
+                        <span class="error-msg" id="err-hora"></span>
+                    </div>
+
+                    <div class="form-group btn-group">
                         <label>&nbsp;</label>
                         <button type="submit" class="btn-save">Salvar</button>
                     </div>
@@ -138,7 +185,7 @@ if (!isset($_SESSION['usuario_id'])) {
         </section>
 
         <section class="card">
-            <h2 class="card-title">Listagem de Pacientes</h2>
+            <h2 class="card-title">Listagem de Agendamentos</h2>
             <div class="table-responsive">
                 <table>
                     <thead>
@@ -148,54 +195,93 @@ if (!isset($_SESSION['usuario_id'])) {
                             <th>CPF</th>
                             <th>TELEFONE</th>
                             <th>E-MAIL</th>
+                            <th>ESPECIALIDADE</th>
                             <th>DATA</th>
                             <th>HORA</th>
                             <th class="actions-header">AÇÕES</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if (!empty($pacientes)): ?>
-                            <?php foreach ($pacientes as $paciente): ?>
-                                <?php $isEditing = (isset($_GET['editar_id']) && $_GET['editar_id'] == $paciente['id']); ?>
+                        <?php if (!empty($agendamentos) && is_array($agendamentos)): ?>
+                            <?php foreach ($agendamentos as $index => $agendamento): ?>
+                                <?php 
+                                    $editarIdParam = filter_input(INPUT_GET, 'editar_id', FILTER_VALIDATE_INT);
+                                    
+                                    $agendamentoId = (int)($agendamento['agendamento_id'] ?? $agendamento['id'] ?? 0);
+                                    $isEditing = ($editarIdParam !== false && $editarIdParam === $agendamentoId); 
+
+                                    $dataRaw = $agendamento['data_agendamento'] ?? $agendamento['data'] ?? '';
+                                    $horaRaw = $agendamento['hora_agendamento'] ?? $agendamento['hora'] ?? '';
+                                    
+                                    $dataInputValue = !empty($dataRaw) ? date('Y-m-d', strtotime($dataRaw)) : '';
+                                    $dataExibir = !empty($dataRaw) ? date('d/m/Y', strtotime($dataRaw)) : '';
+                                    $horaExibir = !empty($horaRaw) ? date('H:i', strtotime($horaRaw)) : '';
+                                    
+                                    $especialidadeExibir = $agendamento['especialidade'] ?? '';
+                                    $idExibicao = $index + 1;
+                                ?>
                                 
                                 <?php if ($isEditing): ?>
                                     <tr>
-                                        <td>
-                                            <form action="/meu-projeto-web/public/pacientes/atualizar" method="POST" id="form-edit-<?= $paciente['id']; ?>">
-                                                <input type="hidden" name="id" value="<?php echo $paciente['id']; ?>">
-                                                <?php echo htmlspecialchars($paciente['id']); ?>
+                                        <td colspan="9" style="padding: 0;">
+                                            <form action="<?= htmlspecialchars($basePath ?? '', ENT_QUOTES, 'UTF-8') ?>/agendamentos/atualizar" method="POST">
+                                                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>">
+                                                <input type="hidden" name="id" value="<?= $agendamentoId; ?>">
+                                                <input type="hidden" name="paciente_id" value="<?= htmlspecialchars($agendamento['paciente_id'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+
+                                                <table style="width: 100%; border-collapse: collapse;">
+                                                    <tr>
+                                                        <td style="width: 5%;"><?= $idExibicao; ?></td>
+                                                        <td><input type="text" name="nome" class="input-inline" value="<?= htmlspecialchars($agendamento['nome'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" required></td>
+                                                        <td><input type="text" name="cpf" class="input-inline" value="<?= htmlspecialchars($agendamento['cpf'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" required></td>
+                                                        <td><input type="text" name="telefone" class="input-inline" value="<?= htmlspecialchars($agendamento['telefone'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"></td>
+                                                        <td><input type="email" name="email" class="input-inline" value="<?= htmlspecialchars($agendamento['email'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" required></td>
+                                                        <td>
+                                                            <select name="especialidade" class="input-inline" required>
+                                                                <option value="">Selecione...</option>
+                                                                <?php foreach (($especialidadesDisponiveis ?? []) as $esp): ?>
+                                                                    <option value="<?= htmlspecialchars($esp, ENT_QUOTES, 'UTF-8'); ?>" <?= ($especialidadeExibir === $esp) ? 'selected' : ''; ?>>
+                                                                        <?= htmlspecialchars($esp, ENT_QUOTES, 'UTF-8'); ?>
+                                                                    </option>
+                                                                <?php endforeach; ?>
+                                                            </select>
+                                                        </td>
+                                                        <td><input type="date" name="data_agendamento" class="input-inline" value="<?= htmlspecialchars($dataInputValue, ENT_QUOTES, 'UTF-8'); ?>" required></td>
+                                                        <td><input type="time" name="hora_agendamento" class="input-inline" value="<?= htmlspecialchars($horaRaw, ENT_QUOTES, 'UTF-8'); ?>" required></td>
+                                                        <td class="actions-cell">
+                                                            <button type="submit" class="btn-action btn-save-inline" title="Salvar Alterações">✓</button>
+                                                            <a href="<?= htmlspecialchars($basePath ?? '', ENT_QUOTES, 'UTF-8') ?>/agendamentos" class="btn-action btn-delete" title="Cancelar">✕</a>
+                                                        </td>
+                                                    </tr>
+                                                </table>
                                             </form>
-                                        </td>
-                                        <td><input type="text" form="form-edit-<?= $paciente['id']; ?>" name="nome" class="input-inline" value="<?php echo htmlspecialchars($paciente['nome']); ?>" required></td>
-                                        <td><input type="text" form="form-edit-<?= $paciente['id']; ?>" name="cpf" class="input-inline" value="<?php echo htmlspecialchars($paciente['cpf']); ?>" required></td>
-                                        <td><input type="text" form="form-edit-<?= $paciente['id']; ?>" name="telefone" class="input-inline" value="<?php echo htmlspecialchars($paciente['telefone'] ?? ''); ?>"></td>
-                                        <td><input type="email" form="form-edit-<?= $paciente['id']; ?>" name="email" class="input-inline" value="<?php echo htmlspecialchars($paciente['email']); ?>" required></td>
-                                        <td><?php echo htmlspecialchars($paciente['data_cadastro'] ?? '--/--/----'); ?></td>
-                                        <td><?php echo htmlspecialchars($paciente['hora_cadastro'] ?? '--:--'); ?></td>
-                                        <td class="actions-cell">
-                                            <button type="submit" form="form-edit-<?= $paciente['id']; ?>" class="btn-action btn-save-inline" title="Salvar Alterações">✔</button>
-                                            <a href="/meu-projeto-web/public/agendamentos" class="btn-action btn-delete" title="Cancelar">✖</a>
                                         </td>
                                     </tr>
                                 <?php else: ?>
                                     <tr>
-                                        <td><?php echo htmlspecialchars($paciente['id']); ?></td>
-                                        <td><?php echo htmlspecialchars($paciente['nome']); ?></td>
-                                        <td><?php echo htmlspecialchars($paciente['cpf']); ?></td>
-                                        <td><?php echo htmlspecialchars($paciente['telefone'] ?? ''); ?></td>
-                                        <td><?php echo htmlspecialchars($paciente['email']); ?></td>
-                                        <td><?php echo htmlspecialchars($paciente['data_cadastro'] ?? '--/--/----'); ?></td>
-                                        <td><?php echo htmlspecialchars($paciente['hora_cadastro'] ?? '--:--'); ?></td>
+                                        <td><?= $idExibicao; ?></td>
+                                        <td><?= htmlspecialchars($agendamento['nome'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                        <td><?= htmlspecialchars($agendamento['cpf'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                        <td><?= htmlspecialchars($agendamento['telefone'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                        <td><?= htmlspecialchars($agendamento['email'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                        <td><?= htmlspecialchars($especialidadeExibir, ENT_QUOTES, 'UTF-8'); ?></td>
+                                        <td><?= htmlspecialchars($dataExibir, ENT_QUOTES, 'UTF-8'); ?></td>
+                                        <td><?= htmlspecialchars($horaExibir, ENT_QUOTES, 'UTF-8'); ?></td>
                                         <td class="actions-cell">
-                                            <a href="/meu-projeto-web/public/agendamentos?editar_id=<?php echo $paciente['id']; ?>" class="btn-action btn-edit" title="Editar">✏️</a>
-                                            <a href="/meu-projeto-web/public/pacientes/excluir?id=<?php echo $paciente['id']; ?>" class="btn-action btn-delete" title="Excluir" onclick="return confirm('Deseja realmente excluir este paciente?');">🗑️</a>
+                                            <a href="<?= htmlspecialchars($basePath ?? '', ENT_QUOTES, 'UTF-8') ?>/agendamentos?editar_id=<?= $agendamentoId; ?>" class="btn-action btn-edit" title="Editar">✏️</a>
+
+                                            <form action="<?= htmlspecialchars($basePath ?? '', ENT_QUOTES, 'UTF-8') ?>/agendamentos/excluir" method="POST" style="display: inline;" onsubmit="return confirm('Deseja realmente excluir este agendamento?');">
+                                                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>">
+                                                <input type="hidden" name="id" value="<?= $agendamentoId; ?>">
+                                                <button type="submit" class="btn-action btn-delete" title="Excluir" style="background: none; border: none; cursor: pointer; padding: 0;">🗑️</button>
+                                            </form>
                                         </td>
                                     </tr>
                                 <?php endif; ?>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="8" class="empty-row">Nenhum paciente cadastrado.</td>
+                                <td colspan="9" class="empty-row">Nenhum agendamento cadastrado.</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
@@ -204,6 +290,6 @@ if (!isset($_SESSION['usuario_id'])) {
         </section>
     </main>
 
-    <script src="/meu-projeto-web/public/js/agendamentos.js"></script>
+    <script src="/public/js/agendamentos.js"></script>
 </body>
 </html>

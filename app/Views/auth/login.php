@@ -1,38 +1,32 @@
-<?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-?>
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MedConnect - Login</title>
-    <link rel="stylesheet" href="/meu-projeto-web/public/css/login.css">
+    <link rel="stylesheet" href="/public/css/login.css">
 </head>
 <body>
 
-    <a href="/meu-projeto-web/public/home" class="top-link">&lt; Portal Público</a>
+    <a href="/home" class="top-link">&lt; Voltar ao Portal Público</a>
 
     <div class="card">
-        <a href="/meu-projeto-web/public/cadastrar" class="g-btn" title="cadastrar">G</a>
         <div class="logo-icon">M</div>
         <h1 class="title">MedConnect</h1>
         <p class="subtitle">Área restrita - Profissionais Autorizados</p>
 
         <?php if (!empty($_SESSION['erro_login'])): ?>
-            <div class="alert alert-danger"><?= $_SESSION['erro_login']; unset($_SESSION['erro_login']); ?></div>
+            <div class="alert alert-danger"><?= htmlspecialchars($_SESSION['erro_login']); unset($_SESSION['erro_login']); ?></div>
         <?php endif; ?>
 
         <?php if (!empty($_SESSION['mensagem_sucesso'])): ?>
-            <div class="alert alert-success"><?= $_SESSION['mensagem_sucesso']; unset($_SESSION['mensagem_sucesso']); ?></div>
+            <div class="alert alert-success"><?= htmlspecialchars($_SESSION['mensagem_sucesso']); unset($_SESSION['mensagem_sucesso']); ?></div>
         <?php endif; ?>
 
-        <form action="/meu-projeto-web/public/login" method="POST" id="formLogin">
+        <form action="/login" method="POST" id="formLogin">
             <div class="form-group">
                 <label for="email">E-MAIL</label>
-                <input type="email" id="email" name="email" required placeholder="admin@medconnect.com">
+                <input type="email" id="email" name="email" required placeholder="Digite o seu e-mail">
             </div>
 
             <div class="form-group">
@@ -40,7 +34,7 @@ if (session_status() === PHP_SESSION_NONE) {
                     <label for="senha">SENHA</label>
                     <a href="#" class="forgot-link">Esqueceu?</a>
                 </div>
-                <input type="password" id="senha" name="senha" required placeholder="••••••">
+                <input type="password" id="senha" name="senha" required placeholder="Digite a senha de acesso">
             </div>
 
             <div class="checkbox-row">
@@ -50,9 +44,8 @@ if (session_status() === PHP_SESSION_NONE) {
 
             <button type="submit" class="btn-submit">Entrar</button>
         </form>
-
-        <p class="footer-text">Não tem uma conta? <a href="/meu-projeto-web/public/cadastrar">Cadastre-se</a></p>
     </div>
 
+    <script src="/public/js/login.js"></script>
 </body>
 </html>
